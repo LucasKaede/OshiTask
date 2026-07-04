@@ -3,301 +3,255 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Task RPG - Mobile</title>
+<title>Oshi Task - Final</title>
 <style>
-  :root {
-    --bg-base: #111116;
-    --panel-bg: #1e1e24;
-    --accent: #00e5ff;
-    --accent-glow: rgba(0, 229, 255, 0.5);
-    --success: #39ff14;
-    --text-main: #f0f0f0;
-    --text-sub: #aaa;
-    --ui-border: rgba(255, 255, 255, 0.1);
-  }
-
+  :root { --bg-base: #fff0f5; --panel-bg: #ffffff; --accent: #ff69b4; --accent-glow: rgba(255, 105, 180, 0.4); --success: #ff1493; --cancel: #ccc; --text-main: #555555; --text-sub: #888888; --ui-border: #ffb6c1; --paper-bg: #fff; --paper-text: #444; }
   * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  body { font-family: 'Hiragino Maru Gothic ProN', 'Rounded M+ 1c', sans-serif; background-color: var(--bg-base); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* --- ヘッダー --- */
+  .header { flex-shrink: 0; height: 55px; background: linear-gradient(135deg, #ffb6c1 0%, #ff69b4 100%); display: flex; justify-content: space-between; align-items: center; padding: 0 15px; border-bottom: 2px solid #ff1493; z-index: 20; color: #fff; }
+  .header-left { display: flex; align-items: center; gap: 10px; font-size: 1em; font-weight: bold; }
+  .header-left span { background: rgba(255,255,255,0.3); padding: 4px 12px; border-radius: 20px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
+  .header-right { display: flex; align-items: center; gap: 8px; }
+  .gold-badge { font-weight: bold; background: #fff; color: var(--accent); padding: 4px 12px; border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+  /* --- メインコンテンツ --- */
+  .main-content { flex-grow: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+  .tab-pane { display: none; height: 100%; flex-direction: column; position: relative; }
+  .tab-pane.active { display: flex; }
+
+  /* === 1. デートタブ === */
+  .progress-track-container { position: absolute; top: 10px; left: 10px; right: 10px; background: rgba(255,255,255,0.85); border-radius: 20px; border: 2px solid var(--ui-border); height: 35px; display: flex; align-items: center; padding: 0 20px; overflow-x: auto; z-index: 10; }
+  .progress-track-container::-webkit-scrollbar { display: none; }
+  .prog-line { height: 4px; background: #ffe4e1; min-width: 25px; flex-grow: 1; transition: 0.5s; }
+  .prog-line.completed { background: var(--success); box-shadow: 0 0 5px var(--accent-glow); }
+  .prog-node { border-radius: 50%; background: #fff; border: 2px solid #ffb6c1; position: relative; flex-shrink: 0; transition: 0.5s; }
+  .prog-node.small { width: 12px; height: 12px; } .prog-node.big { width: 18px; height: 18px; border-width: 3px; }
+  .prog-node.completed { background: var(--success); border-color: var(--success); }
   
-  body {
-    font-family: 'Helvetica Neue', Arial, sans-serif;
-    background-color: var(--bg-base);
-    color: var(--text-main);
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden; /* スクロールは特定エリアのみに制限 */
-  }
-
-  /* 上部：ステータスヘッダー */
-  .header {
-    height: 50px;
-    background: rgba(0, 0, 0, 0.8);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 15px;
-    border-bottom: 1px solid var(--ui-border);
-    font-size: 0.9em;
-    z-index: 10;
-  }
-  .header-left { display: flex; align-items: center; gap: 10px; }
-  .level-badge {
-    background: var(--accent); color: #000;
-    padding: 2px 8px; border-radius: 4px; font-weight: bold;
-  }
-  .header-right { color: var(--accent); font-weight: bold; }
-
-  /* コンテンツエリア（タブ切り替えで中身が変わる場所） */
-  .main-content {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    overflow: hidden;
-  }
-
-  /* --- ホームタブ（キャラ＆タスク） --- */
-  #tab-home {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-  }
-
-  /* 上半分：キャラクターエリア */
-  .character-area {
-    flex: 0 0 45%; /* 画面の上半分弱を占有 */
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-    border-bottom: 2px solid var(--accent);
-  }
-  /* キャラクターのプレースホルダー（立ち絵が入る想定） */
-  .character-sprite {
-    width: 200px;
-    height: 90%;
-    background: rgba(255,255,255,0.05);
-    border: 1px dashed var(--accent);
-    border-bottom: none;
-    display: flex; justify-content: center; align-items: center;
-    color: var(--accent);
-    font-size: 0.8em;
-  }
-  /* キャラクターのセリフ枠 */
-  .dialogue-box {
-    position: absolute;
-    bottom: 10px;
-    left: 10px; right: 10px;
-    background: rgba(0, 0, 0, 0.7);
-    border: 1px solid var(--ui-border);
-    padding: 10px 15px;
-    border-radius: 8px;
-    font-size: 0.85em;
-    backdrop-filter: blur(4px);
-  }
-
-  /* 下半分：タスクリストエリア */
-  .task-area {
-    flex: 1;
-    background: var(--bg-base);
-    overflow-y: auto;
-    padding: 15px;
-    padding-bottom: 20px; /* タブバーの被り防止 */
-  }
-  .task-header {
-    display: flex; justify-content: space-between;
-    margin-bottom: 15px; font-size: 0.9em; color: var(--text-sub);
-  }
+  .character-area { flex: 0 0 45%; background: linear-gradient(135deg, #ffe4e1 0%, #fff0f5 100%); position: relative; display: flex; justify-content: center; align-items: center; border-bottom: 3px solid var(--ui-border); transition: 0.5s; padding-top: 20px; }
+  .character-area.working { background: linear-gradient(135deg, #ffb6c1 0%, #ffe4e1 100%); }
+  .btn-char-change { position: absolute; top: 55px; right: 15px; background: #fff; border: 2px solid var(--ui-border); border-radius: 20px; padding: 5px 12px; font-size: 0.85em; font-weight: bold; color: var(--accent); cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 5; }
   
-  .task-list { list-style: none; }
-  .task-item {
-    background: var(--panel-bg);
-    margin-bottom: 10px; padding: 15px;
-    border-radius: 8px;
-    display: flex; align-items: center;
-    border-left: 4px solid var(--accent);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    transition: 0.3s;
+  /* 常時ふわふわアニメーションの復活 */
+  .character-sprite-container {
+    width: 160px; height: 160px; display: flex; justify-content: center; align-items: center; font-size: 6em;
+    filter: drop-shadow(0 5px 10px rgba(255,105,180,0.3));
+    animation: floatAnimIdle 3s infinite alternate ease-in-out;
   }
-  .task-item.completed {
-    background: #1a1a1f;
-    border-left-color: var(--success);
-    opacity: 0.6;
-    transform: scale(0.98);
-  }
+  .working .character-sprite-container { animation: floatAnimWork 1s infinite alternate ease-in-out; }
+  @keyframes floatAnimIdle { 0% { transform: translateY(0); } 100% { transform: translateY(-8px); } }
+  @keyframes floatAnimWork { 0% { transform: translateY(0) scale(1); } 100% { transform: translateY(-15px) scale(1.02); } }
+
+  .dialogue-box { position: absolute; bottom: 15px; left: 15px; right: 15px; background: #fff; border: 2px solid var(--accent); padding: 15px; border-radius: 15px; font-size: 0.9em; font-weight: bold; color: var(--text-main); box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 5; min-height: 50px; }
+  .dialogue-box::before { content: ''; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); border-width: 0 10px 12px 10px; border-style: solid; border-color: transparent transparent var(--accent) transparent; }
+  .dialogue-box::after { content: ''; position: absolute; top: -9px; left: 50%; transform: translateX(-50%); border-width: 0 8px 10px 8px; border-style: solid; border-color: transparent transparent #fff transparent; }
+
+  .task-area { flex: 1; overflow-y: auto; padding: 15px; background: var(--bg-base); }
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; color: var(--text-sub); }
+  .mq-card { background: var(--panel-bg); margin-bottom: 15px; border-radius: 12px; border: 2px solid var(--ui-border); box-shadow: 0 4px 8px rgba(255,105,180,0.1); transition: 0.5s; }
+  .mq-card.completed { opacity: 0.6; filter: grayscale(0.5); border-color: var(--cancel); }
+  .mq-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 2px dashed var(--ui-border); background: #fffaf0; border-radius: 10px 10px 0 0; }
+  .mq-title { font-weight: bold; font-size: 1.05em; color: var(--accent); } .completed .mq-title { color: var(--cancel); text-decoration: line-through; }
+  .mq-controls { display: flex; align-items: center; gap: 10px; }
+  .mq-timer { font-family: monospace; font-size: 1.1em; color: var(--accent); font-weight: bold; width: 50px; text-align: right; background: #fff0f5; padding: 2px 6px; border-radius: 8px; }
+  .btn-action { border: none; padding: 6px 12px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.9em; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+  .btn-start-quest { background: var(--accent); color: #fff; } .btn-stop-quest { background: #fff; color: var(--accent); border: 2px solid var(--accent); } .btn-completed-quest { background: #eee; color: #aaa; pointer-events: none; }
+
+  .mq-subtasks { list-style: none; padding: 5px 15px 10px 15px; }
+  .subtask-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed #ffe4e1; cursor: pointer; transition: 0.3s; } .subtask-item:last-child { border-bottom: none; }
+  .subtask-title-wrap { position: relative; flex-grow: 1; }
+  .subtask-title { font-size: 0.95em; position: relative; display: inline-block; transition: color 0.5s; } .subtask-title::after { content: ''; position: absolute; left: 0; top: 50%; width: 0; height: 2px; background-color: var(--accent); transition: width 0.5s cubic-bezier(0.25, 0.1, 0.25, 1); }
+  .subtask-item.completed .subtask-title { color: var(--cancel); } .subtask-item.completed .subtask-title::after { width: 100%; background-color: var(--cancel); }
+  .checkbox { font-size: 1.4em; color: #ccc; transition: 0.2s; line-height: 1; } .subtask-item.completed .checkbox { color: var(--accent); transform: scale(1.1); }
+
+  /* === 2. 今日の予定タブ === */
+  .board-header { background: #fff; color: var(--accent); text-align: center; padding: 12px; font-weight: bold; border-bottom: 2px solid var(--ui-border); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+  .corkboard { background-color: #fffaf0; background-image: radial-gradient(#ffe4e1 15%, transparent 16%), radial-gradient(#ffe4e1 15%, transparent 16%); background-size: 20px 20px; background-position: 0 0, 10px 10px; flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-content: flex-start; padding-bottom: 220px; }
+  .quest-paper { background: #fff; color: var(--paper-text); width: 45%; padding: 20px 10px 15px 10px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); position: relative; text-align: center; font-weight: bold; touch-action: none; font-size: 0.9em; border: 2px solid var(--ui-border); }
+  .quest-paper::before { content: '🎀'; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); font-size: 1.5em; }
+  .quest-paper:nth-child(even) { transform: rotate(2deg); } .quest-paper:nth-child(odd) { transform: rotate(-2deg); }
+  .quest-emoji { font-size: 1.2em; display: block; margin-top: 5px; }
+  .dragging-clone { position: fixed; z-index: 9999; pointer-events: none; transform: scale(1.05) rotate(0deg); opacity: 0.9; box-shadow: 0 10px 20px rgba(255,105,180,0.3); }
+
+  .inbox-drawer { position: absolute; bottom: 0; left: 0; width: 100%; background-color: rgba(255,255,255,0.95); border-top: 3px solid var(--accent); height: 200px; transform: translateY(100%); transition: transform 0.3s; display: flex; flex-direction: column; padding: 15px; z-index: 10; box-shadow: 0 -5px 20px rgba(255,105,180,0.2); backdrop-filter: blur(5px); }
+  .inbox-drawer.open { transform: translateY(0); }
+  .inbox-header { color: var(--accent); font-weight: bold; margin-bottom: 10px; text-align: center; font-size: 0.95em; }
+  .inbox-items { flex-grow: 1; display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; align-items: center; }
+  .inbox-chip { background: #fff0f5; padding: 8px 12px; border-radius: 20px; font-size: 0.85em; font-weight: bold; display: flex; align-items: center; gap: 6px; border: 1px solid var(--ui-border); white-space: nowrap; }
+  .move-btn { color: #ffb6c1; font-size: 1.2em; cursor: pointer; padding: 0 2px; } .del-btn { color: var(--cancel); font-size: 1.2em; cursor: pointer; padding-left: 4px; }
+  .btn-start { background: var(--accent); color: #fff; border: none; padding: 15px; border-radius: 30px; font-weight: bold; font-size: 1.1em; width: 100%; cursor: pointer; box-shadow: 0 4px 10px var(--accent-glow); }
+
+  /* === 3. 作成タブ === */
+  .issue-area { flex: 1; overflow-y: auto; padding: 20px; background: #fffaf0; }
+  .form-section { background: #fff; padding: 20px; border-radius: 15px; border: 2px solid var(--ui-border); margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+  .form-title { font-size: 1.1em; color: var(--accent); margin-bottom: 15px; border-bottom: 2px dashed var(--ui-border); padding-bottom: 10px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+  .btn-new-create { background: #fff0f5; color: var(--accent); border: 1px solid var(--accent); padding: 4px 10px; border-radius: 15px; font-size: 0.8em; cursor: pointer; }
+  .input-group { margin-bottom: 15px; } .input-group label { display: block; font-size: 0.85em; color: var(--text-sub); margin-bottom: 5px; font-weight: bold; }
+  .title-emoji-row { display: flex; gap: 10px; } .input-text { flex-grow: 1; padding: 12px; background: #fff; border: 2px solid #eee; border-radius: 8px; font-family: inherit; }
+  .input-emoji { width: 60px; text-align: center; font-size: 1.2em; padding: 10px; background: #fff; border: 2px solid #eee; border-radius: 8px; }
+  .day-selector { display: flex; flex-wrap: wrap; gap: 8px; } .day-chip { display: flex; align-items: center; cursor: pointer; } .day-chip input { display: none; }
+  .day-chip span { background: #fff; border: 2px solid #eee; color: var(--text-sub); padding: 8px 12px; border-radius: 20px; font-size: 0.85em; transition: 0.2s; font-weight: bold; }
+  .day-chip input:checked + span { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 2px 5px var(--accent-glow); }
+  .subtask-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; } .subtask-row { display: flex; gap: 5px; align-items: center; }
+  .btn-icon { background: #f5f5f5; color: var(--text-sub); border: none; padding: 10px; border-radius: 8px; cursor: pointer; } .btn-icon.del { color: var(--success); }
+  .btn-add-sub { background: #fff0f5; border: 2px dashed var(--accent); color: var(--accent); padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; margin-bottom: 15px; font-weight: bold; }
+  .btn-submit { background: var(--accent); color: #fff; font-weight: bold; padding: 15px; width: 100%; border: none; border-radius: 30px; font-family: inherit; cursor: pointer; box-shadow: 0 4px 10px var(--accent-glow); }
+  .edit-list { display: flex; flex-direction: column; gap: 10px; } .edit-item { background: #fff; border: 2px solid #eee; padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; } .edit-actions button { background: #fff0f5; border: 1px solid var(--ui-border); color: var(--accent); padding: 5px 12px; border-radius: 15px; margin-left: 5px; cursor: pointer; font-size: 0.8em; font-weight: bold; }
+
+  /* === 4. ショップタブ === */
+  .shop-area { flex: 1; padding: 20px; background: #fffaf0; text-align: center; }
+  .gacha-box { background: #fff; padding: 30px 20px; border-radius: 20px; border: 3px solid var(--accent); box-shadow: 0 10px 20px rgba(255,105,180,0.1); margin-top: 20px; }
+  .gacha-box h2 { color: var(--accent); margin-bottom: 10px; }
+  .btn-gacha { background: linear-gradient(135deg, #ff69b4, #ff1493); color: #fff; font-size: 1.1em; font-weight: bold; padding: 15px; border: none; border-radius: 30px; box-shadow: 0 5px 15px var(--accent-glow); cursor: pointer; margin-top: 20px; width: 100%; }
+
+  /* === 5. カレンダータブ === */
+  .calendar-area { flex: 1; padding: 20px; background: #fffaf0; overflow-y: auto; text-align: center; }
+  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 20px; }
+  .cal-header { font-weight: bold; color: var(--accent); padding: 5px 0; border-bottom: 2px solid var(--ui-border); }
+  .cal-day { background: #fff; border: 2px solid #eee; border-radius: 8px; aspect-ratio: 1; display: flex; justify-content: center; align-items: center; font-weight: bold; color: var(--text-main); position: relative; }
+  .cal-day.today { border-color: var(--accent); background: #fff0f5; }
+  .cal-stamp { position: absolute; font-size: 1.8em; color: var(--success); opacity: 0.8; transform: rotate(-10deg); }
+
+  /* --- モーダル --- */
+  .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 9999; backdrop-filter: blur(2px); }
+  .modal-content { background: #fff; width: 85%; max-width: 400px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); border: 3px solid var(--ui-border); text-align: center; }
+  .modal-title { font-size: 1.2em; font-weight: bold; color: var(--accent); margin-bottom: 15px; line-height: 1.4; }
+  .input-modal { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 8px; font-size: 1.1em; margin-bottom: 15px; font-family: inherit; }
+  .btn-modal { background: var(--accent); color: #fff; border: none; padding: 12px 20px; border-radius: 20px; font-weight: bold; width: 100%; cursor: pointer; }
+
+  .char-modal-content { max-height: 80%; display: flex; flex-direction: column; overflow: hidden; }
+  .char-list { overflow-y: auto; padding: 10px 0; flex-grow: 1; text-align: left; }
+  .char-item { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #ffe4e1; cursor: pointer; } .char-item-icon { font-size: 2em; margin-right: 15px; } .char-item-name { font-weight: bold; color: var(--accent); }
+
+  /* --- 下部ナビ --- */
+  .bottom-nav { flex-shrink: 0; height: 70px; background: #fff; border-top: 2px solid var(--ui-border); display: flex; justify-content: space-around; align-items: center; padding-bottom: env(safe-area-inset-bottom); z-index: 20; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
+  .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--cancel); font-size: 0.7em; gap: 4px; flex: 1; cursor: pointer; font-weight: bold; }
+  .nav-item.active { color: var(--accent); } .nav-icon { font-size: 1.5em; transition: 0.2s; }
+  .nav-item.active .nav-icon { transform: translateY(-3px); filter: drop-shadow(0 2px 2px var(--accent-glow)); }
   
-  /* チェックボックスの演出 */
-  .checkbox {
-    width: 28px; height: 28px;
-    border: 2px solid var(--accent);
-    border-radius: 50%;
-    margin-right: 15px;
-    display: flex; justify-content: center; align-items: center;
-    transition: 0.2s;
-  }
-  .completed .checkbox {
-    background: var(--success); border-color: var(--success);
-    box-shadow: 0 0 12px var(--success);
-  }
-  .checkbox::after {
-    content: '✓'; color: #000; font-weight: bold;
-    opacity: 0; font-size: 1.2em;
-  }
-  .completed .checkbox::after { opacity: 1; }
-  .task-title { font-size: 0.95em; }
-
-  /* --- その他のタブ（プレースホルダー） --- */
-  .tab-pane { display: none; padding: 20px; height: 100%; overflow-y: auto; }
-  .tab-pane.active { display: block; }
-  #tab-home.active { display: flex; } /* ホームタブ用の特別処理 */
-
-  /* 下部：タブナビゲーション */
-  .bottom-nav {
-    height: 65px;
-    background: #0a0a0d;
-    border-top: 1px solid var(--ui-border);
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    padding-bottom: env(safe-area-inset-bottom); /* iPhoneX以降の対応 */
-    z-index: 10;
-  }
-  .nav-item {
-    display: flex; flex-direction: column; align-items: center;
-    color: var(--text-sub); font-size: 0.7em;
-    gap: 4px; transition: 0.2s;
-  }
-  .nav-item.active { color: var(--accent); }
-  .nav-icon {
-    width: 24px; height: 24px;
-    background: #333; border-radius: 4px;
-    display: flex; justify-content: center; align-items: center;
-    font-size: 1.2em;
-  }
-  .nav-item.active .nav-icon {
-    background: var(--accent-glow);
-    border: 1px solid var(--accent);
-  }
-
+  /* ローディング画面 */
+  #loadingScreen { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--bg-base); z-index: 10000; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--accent); font-weight: bold; }
 </style>
 </head>
 <body>
 
-<!-- 上部情報 -->
-<div class="header">
-  <div class="header-left">
-    <div class="level-badge">Lv.12</div>
-    <span>タンク型</span>
-  </div>
-  <div class="header-right">
-    💎 150
+<!-- ローディング -->
+<div id="loadingScreen">
+  <div style="font-size: 3em; margin-bottom: 20px; animation: floatAnim 1s infinite alternate;">💕</div>
+  <p>キャラデータを読み込み中...</p>
+</div>
+
+<!-- ログインモーダル -->
+<div class="modal-overlay" id="loginModal" style="display:none;">
+  <div class="modal-content">
+    <div class="modal-title">ようこそ！<br>あなたのお名前を教えてね💕</div>
+    <input type="text" id="playerNameInput" class="input-modal" placeholder="例：ゲスト">
+    <button class="btn-modal" onclick="doLogin()">はじめる</button>
   </div>
 </div>
 
-<!-- メインコンテンツ -->
+<div class="header">
+  <div class="header-left"><span id="playerNameDisplay">ゲスト</span></div>
+  <div class="header-right"><div class="gold-badge" id="goldDisplay">💖 0G</div></div>
+</div>
+
 <div class="main-content">
-  
-  <!-- ホームタブ (上半分キャラ / 下半分タスク) -->
+  <!-- 1. デートタブ -->
   <div id="tab-home" class="tab-pane active">
-    <div class="character-area">
-      <div class="character-sprite">キャラ立ち絵<br>(Live2D等)</div>
-      <div class="dialogue-box" id="dialogueText">
-        「司令、今日のデイリーミッションを受注しました。準備はいいですか？」
+    <div class="progress-track-container" id="progressTrack" style="display: none;"></div>
+    <div class="character-area" id="charArea">
+      <button class="btn-char-change" onclick="openCharModal()">🔄 推し変更</button>
+      <div class="character-sprite-container" id="charSpriteContainer">
+        <!-- 画像がない場合は絵文字、画像がある場合は画像が表示される -->
       </div>
+      <div class="dialogue-box" id="dialogueText"></div>
     </div>
     <div class="task-area">
-      <div class="task-header">
-        <span>デイリーミッション (動画制作セット)</span>
-        <span>0/3</span>
+      <div class="empty-state" id="emptyState">
+        <p>今日は予定が入ってないみたい</p>
+        <button class="btn-start" style="margin-top:20px; width:80%;" onclick="switchTab('tab-quest', document.getElementById('nav-quest'))">予定を立てる 🗓️</button>
       </div>
-      <ul class="task-list">
-        <li class="task-item" onclick="completeTask(this)">
-          <div class="checkbox"></div>
-          <div class="task-title">編集ソフトを起動する</div>
-        </li>
-        <li class="task-item" onclick="completeTask(this)">
-          <div class="checkbox"></div>
-          <div class="task-title">素材フォルダを開く</div>
-        </li>
-        <li class="task-item" onclick="completeTask(this)">
-          <div class="checkbox"></div>
-          <div class="task-title">タイムラインに素材を置く</div>
-        </li>
-      </ul>
+      <div id="activeTaskView" style="display: none;"><div id="taskList"></div></div>
     </div>
   </div>
 
-  <!-- 編成/ステータスタブ -->
-  <div id="tab-status" class="tab-pane">
-    <h2>📊 ステータス＆ロール</h2>
-    <p style="margin-top:20px; color:var(--text-sub);">
-      ここに6段階（0〜5）のレーダーチャートや、ロール（タンク/ダメージ）の変更画面が入ります。
-    </p>
+  <!-- 2. 今日の予定タブ (ボード) -->
+  <div id="tab-quest" class="tab-pane">
+    <div class="board-header" id="boardHeader">📅 今日の予定</div>
+    <div class="corkboard" id="corkboard"></div>
+    <div class="inbox-drawer" id="inboxDrawer">
+      <div class="inbox-header">📥 予定リスト (ドラッグで追加)</div>
+      <div class="inbox-items" id="inboxItems"></div>
+      <button class="btn-start" onclick="startOperations()">予定を開始する 💖</button>
+    </div>
   </div>
 
-  <!-- エコータブ (オンライン) -->
-  <div id="tab-echo" class="tab-pane">
-    <h2>📡 エコー通信</h2>
-    <p style="margin-top:20px; color:var(--text-sub);">
-      ここに他のプレイヤーのタスク完了報告がリアルタイムで流れるタイムラインが入ります。
-    </p>
+  <!-- 3. 作成タブ (発行) -->
+  <div id="tab-issue" class="tab-pane">
+    <div class="issue-area">
+      <div class="form-section">
+        <div class="form-title">
+          <span id="formHeader">📝 予定を新しく作る</span>
+          <button id="cancelEditBtn" class="btn-new-create" style="display:none;" onclick="cancelEdit()">+ 新規作成</button>
+        </div>
+        <input type="hidden" id="editQuestId" value="">
+        <div class="input-group">
+          <label>予定名と アイコン</label>
+          <div class="title-emoji-row"><input type="text" id="questTitleInput" class="input-text" placeholder="例：お買い物"><input type="text" id="questEmojiInput" class="input-emoji" maxlength="2" placeholder="🛍️"></div>
+        </div>
+        <div class="input-group">
+          <label>予定を入れる曜日</label>
+          <div class="day-selector" id="daySelectors">
+            <label class="day-chip"><input type="checkbox" value="1"><span>月</span></label><label class="day-chip"><input type="checkbox" value="2"><span>火</span></label><label class="day-chip"><input type="checkbox" value="3"><span>水</span></label><label class="day-chip"><input type="checkbox" value="4"><span>木</span></label><label class="day-chip"><input type="checkbox" value="5"><span>金</span></label><label class="day-chip"><input type="checkbox" value="6"><span>土</span></label><label class="day-chip"><input type="checkbox" value="0"><span>日</span></label>
+          </div>
+        </div>
+        <div class="input-group">
+          <label>やることリスト（▲▼で入れ替え）</label>
+          <div class="subtask-list" id="subtaskInputsArea"></div>
+          <button class="btn-add-sub" onclick="addSubtaskField()">+ リストを追加</button>
+        </div>
+        <button class="btn-submit" onclick="saveQuest()">予定表に保存する 💌</button>
+      </div>
+      <div class="form-section"><div class="form-title">📋 登録した予定の管理</div><div class="edit-list" id="editListArea"></div></div>
+    </div>
   </div>
 
+  <!-- 4. ショップタブ -->
+  <div id="tab-shop" class="tab-pane">
+    <div class="shop-area">
+      <div class="gacha-box">
+        <h2>✨ ガチャ ✨</h2>
+        <p>1回 100G で推しの衣装をゲット！</p>
+        <button class="btn-gacha" onclick="drawGacha()">100G でガチャを引く 🎁</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. カレンダータブ -->
+  <div id="tab-calendar" class="tab-pane">
+    <div class="board-header">📅 カレンダー記録</div>
+    <div class="calendar-area">
+      <h3 id="calMonthDisplay" style="color:var(--accent);">2026年 7月</h3>
+      <p style="font-size:0.8em; color:#888;">全ての予定を終わらせた日にスタンプがつくよ！</p>
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+  </div>
 </div>
 
-<!-- 下部タブナビゲーション -->
+<!-- モーダル群 -->
+<div class="modal-overlay" id="questModal" style="display:none;"><div class="modal-content"><div class="modal-title" id="modalTitle"></div><ul class="modal-list" id="modalList" style="text-align:left;"></ul><button class="btn-modal" style="background:#eee; color:#444;" onclick="closeModal()">閉じる</button></div></div>
+<div class="modal-overlay" id="charModal" style="display:none;"><div class="modal-content char-modal-content"><div class="modal-title">推しを選択してね</div><div class="char-list" id="charListArea"></div><button class="btn-modal" style="background:#eee; color:#444; margin-top:10px;" onclick="document.getElementById('charModal').style.display='none'">閉じる</button></div></div>
+
 <div class="bottom-nav">
-  <div class="nav-item active" onclick="switchTab('tab-home', this)">
-    <div class="nav-icon">🏠</div>
-    <span>ホーム</span>
-  </div>
-  <div class="nav-item" onclick="switchTab('tab-status', this)">
-    <div class="nav-icon">⚙️</div>
-    <span>編成</span>
-  </div>
-  <div class="nav-item" onclick="switchTab('tab-echo', this)">
-    <div class="nav-icon">📡</div>
-    <span>通信</span>
-  </div>
-  <div class="nav-item" onclick="alert('ショップ画面は未実装です')">
-    <div class="nav-icon">💎</div>
-    <span>ショップ</span>
-  </div>
+  <div class="nav-item active" id="nav-home" onclick="switchTab('tab-home', this)"><div class="nav-icon">💕</div><span>デート</span></div>
+  <div class="nav-item" id="nav-quest" onclick="switchTab('tab-quest', this)"><div class="nav-icon">📌</div><span>今日の予定</span></div>
+  <div class="nav-item" id="nav-issue" onclick="switchTab('tab-issue', this)"><div class="nav-icon">📝</div><span>作成</span></div>
+  <div class="nav-item" id="nav-shop" onclick="switchTab('tab-shop', this)"><div class="nav-icon">🛍️</div><span>ショップ</span></div>
+  <div class="nav-item" id="nav-cal" onclick="switchTab('tab-calendar', this)"><div class="nav-icon">📅</div><span>カレンダー</span></div>
 </div>
 
-<script>
-  // タスク完了時の処理（脳汁演出とキャラセリフの変化）
-  function completeTask(element) {
-    if (element.classList.contains('completed')) return;
-    
-    // タスクを完了状態にする
-    element.classList.add('completed');
-    
-    // スマホのバイブレーションを鳴らす（対応機種のみ）
-    if (navigator.vibrate) {
-      navigator.vibrate(50); // 短く鋭い振動で「ヒット感」を出す
-    }
-
-    // キャラクターのセリフをランダムに変更してフィードバック
-    const dialogues = [
-      "「目標クリア！その調子です！」",
-      "「いい動きですね。次も行きましょう。」",
-      "「一つ片付きましたね。お疲れ様です。」"
-    ];
-    document.getElementById('dialogueText').innerText = dialogues[Math.floor(Math.random() * dialogues.length)];
-  }
-
-  // タブ切り替え処理
-  function switchTab(tabId, navElement) {
-    // 全てのタブとナビゲーションのアクティブを解除
-    document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    
-    // 選択されたものをアクティブにする
-    document.getElementById(tabId).classList.add('active');
-    navElement.classList.add('active');
-  }
-</script>
+<script src="app.js"></script>
 </body>
 </html>
